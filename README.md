@@ -44,7 +44,13 @@ git clone https://github.com/MeMaKr/Quad-Trivia-Assignment.git
 cd Quad-Trivia-Assignment
 ~~~
 
-Build the application:
+Build the application
+
+Only if you're on MacOS or Linux, first run this:
+~~~
+chmod +x .mvnw 
+~~~
+Then run this:
 ~~~
 ./mvnw clean install 
 ~~~
