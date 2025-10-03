@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="">
+<head>
+    <meta charset="utf-8" />
+    <title>Trivia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+        .question {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<h1>Trivia Quiz</h1>
+<label>
+    Number of questions:
+    <input id="amount" type="number" value="3" min="1" max="50">
+</label>
+<button id="start">Start new Quiz</button>
+
+<div id="quiz"></div>
+
+<button id="submit" style="display:none">Submit Answers</button>
+<div id="result"></div>
+
+<script>
+    let questionSetId;
+
+    document.getElementById('start').addEventListener('click', async () => {
+        const amount = document.getElementById('amount').value;
+        const res = await fetch('/api/questions?amount=' + encodeURIComponent(amount));
+        const data = await res.json();
+
+        questionSetId = data.questionSetId;
+        const quiz = document.getElementById('quiz');
+        quiz.innerHTML = '';
+
+        data.questions.forEach(q => {
+            const div = document.createElement('div');
+            div.className = 'question';
+            div.innerHTML = `<strong>${q.question}</strong><br/>`;
+
+            q.choices.forEach(c => {
+                div.innerHTML += `
+            <label>
+              <input type="radio" name="${q.id}" value="${escapeHtml(c)}">
+              ${escapeHtml(c)}
+            </label><br/>
+          `;
+            });
+
+            quiz.appendChild(div);
+        });
+
+        document.getElementById('submit').style.display = 'inline-block';
+    });
+
+    document.getElementById('submit').addEventListener('click', async () => {
+        const answers = {};
+        document.querySelectorAll('.question').forEach(div => {
+            const name = div.querySelector('input[type=radio]').name;
+            const sel = div.querySelector('input[type=radio]:checked');
+            answers[name] = sel ? sel.value : null;
+        });
+
+        const res = await fetch('/api/checkanswers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionSetId, answers })
+        });
+        const data = await res.json();
+
+        document.getElementById('result').innerText =
+            `Score: ${data.correct}/${data.total}`;
+    });
+
+    function escapeHtml(s) {
+        return s
+            .replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;')
+            .replaceAll('"','&quot;')
+            .replaceAll("'", '&#039;');
+    }
+</script>
+</body>
+</html>
